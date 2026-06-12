@@ -1,0 +1,11 @@
+# training and evaluation
+torch
+numpy
+transformers
+bitsandbytes
+datasets
+lm_eval
+
+# plotting only (plot_metrics.py, assets/readme_figures.py)
+matplotlib
+seaborn
