@@ -42,8 +42,7 @@ versions: [results.json](results.json).
 
 ## Reproduce
 
-Runs on [Modal](https://modal.com) (one A100-80GB container per test,
-about a dollar of compute total):
+Runs on [Modal](https://modal.com) (one A100-80GB container per test):
 
 ```bash
 pip install modal
