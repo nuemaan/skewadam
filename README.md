@@ -96,6 +96,7 @@ runs/                Per-step metrics for the four reported runs (JSON)
 eval_metrics_*.json  Zero-shot results per optimizer
 figures/             Paper figures (PDF)
 assets/              README figures (PNG) + the script that renders them
+experiments/         Standalone studies (int32 optimizer-state boundary)
 ```
 
 ## Notes and caveats
@@ -104,6 +105,7 @@ assets/              README figures (PNG) + the script that renders them
 - **Single run per optimizer** at standard learning rates (3e-4 AdamW/SkewAdam, 1e-4 Lion, 0.02 Muon). Lion is known to be learning-rate sensitive; a sweep could narrow its gap.
 - **Adafactor and GaLore** are implemented in `train.py` behind the same interface but were not part of the reported comparison — preliminary runs favored SkewAdam, but the compute budget ran out before matched 10,000-step runs could be completed.
 - Zero-shot scores after 82M tokens are near chance for all optimizers, as expected at that token budget; they are included for completeness.
+- **8-bit optimizer states hit a hard int32 wall** that factored state does not: bitsandbytes' `Adam8bit` kills the process (C++ `exit(1)`, uncatchable) the moment a single parameter tensor reaches 2³¹ elements, while SkewAdam and fp32 Adam cross the boundary cleanly. Measured boundary, repro script, and raw logs in [experiments/int32-boundary](experiments/int32-boundary).
 
 ## Support this work
 

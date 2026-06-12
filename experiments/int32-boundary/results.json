@@ -1,0 +1,273 @@
+{
+  "env": {
+    "gpu": "NVIDIA A100-SXM4-80GB",
+    "torch": "2.12.0+cu130",
+    "cuda": "13.0",
+    "bitsandbytes": "0.49.2"
+  },
+  "results": [
+    {
+      "shape": [
+        2000000000
+      ],
+      "numel": 2000000000,
+      "optimizer": "Adam32",
+      "success": true,
+      "error_type": null,
+      "error": null,
+      "traceback": null,
+      "step_time_s": 0.2214,
+      "env": {
+        "gpu": "NVIDIA A100-SXM4-80GB",
+        "torch": "2.12.0+cu130",
+        "cuda": "13.0",
+        "bitsandbytes": "0.49.2"
+      }
+    },
+    {
+      "shape": [
+        2000000000
+      ],
+      "numel": 2000000000,
+      "optimizer": "Adam8bit",
+      "success": true,
+      "error_type": null,
+      "error": null,
+      "traceback": null,
+      "step_time_s": 0.1106,
+      "env": {
+        "gpu": "NVIDIA A100-SXM4-80GB",
+        "torch": "2.12.0+cu130",
+        "cuda": "13.0",
+        "bitsandbytes": "0.49.2"
+      }
+    },
+    {
+      "shape": [
+        2000000000
+      ],
+      "numel": 2000000000,
+      "optimizer": "SkewAdam",
+      "success": true,
+      "error_type": null,
+      "error": null,
+      "traceback": null,
+      "step_time_s": 0.4081,
+      "env": {
+        "gpu": "NVIDIA A100-SXM4-80GB",
+        "torch": "2.12.0+cu130",
+        "cuda": "13.0",
+        "bitsandbytes": "0.49.2"
+      }
+    },
+    {
+      "shape": [
+        2147483000
+      ],
+      "numel": 2147483000,
+      "optimizer": "Adam32",
+      "success": true,
+      "error_type": null,
+      "error": null,
+      "traceback": null,
+      "step_time_s": 0.2269,
+      "env": {
+        "gpu": "NVIDIA A100 80GB PCIe",
+        "torch": "2.12.0+cu130",
+        "cuda": "13.0",
+        "bitsandbytes": "0.49.2"
+      }
+    },
+    {
+      "shape": [
+        2147483000
+      ],
+      "numel": 2147483000,
+      "optimizer": "Adam8bit",
+      "success": true,
+      "error_type": null,
+      "error": null,
+      "traceback": null,
+      "step_time_s": 0.0898,
+      "env": {
+        "gpu": "NVIDIA A100 80GB PCIe",
+        "torch": "2.12.0+cu130",
+        "cuda": "13.0",
+        "bitsandbytes": "0.49.2"
+      }
+    },
+    {
+      "shape": [
+        2147483000
+      ],
+      "numel": 2147483000,
+      "optimizer": "SkewAdam",
+      "success": true,
+      "error_type": null,
+      "error": null,
+      "traceback": null,
+      "step_time_s": 0.336,
+      "env": {
+        "gpu": "NVIDIA A100 80GB PCIe",
+        "torch": "2.12.0+cu130",
+        "cuda": "13.0",
+        "bitsandbytes": "0.49.2"
+      }
+    },
+    {
+      "shape": [
+        2147483647
+      ],
+      "numel": 2147483647,
+      "optimizer": "Adam32",
+      "success": true,
+      "error_type": null,
+      "error": null,
+      "traceback": null,
+      "step_time_s": 0.2822,
+      "env": {
+        "gpu": "NVIDIA A100-SXM4-80GB",
+        "torch": "2.12.0+cu130",
+        "cuda": "13.0",
+        "bitsandbytes": "0.49.2"
+      }
+    },
+    {
+      "shape": [
+        2147483647
+      ],
+      "numel": 2147483647,
+      "optimizer": "Adam8bit",
+      "success": true,
+      "error_type": null,
+      "error": null,
+      "traceback": null,
+      "step_time_s": 0.1129,
+      "env": {
+        "gpu": "NVIDIA A100-SXM4-80GB",
+        "torch": "2.12.0+cu130",
+        "cuda": "13.0",
+        "bitsandbytes": "0.49.2"
+      }
+    },
+    {
+      "shape": [
+        2147483647
+      ],
+      "numel": 2147483647,
+      "optimizer": "SkewAdam",
+      "success": true,
+      "error_type": null,
+      "error": null,
+      "traceback": null,
+      "step_time_s": 0.6532,
+      "env": {
+        "gpu": "NVIDIA A100-SXM4-80GB",
+        "torch": "2.12.0+cu130",
+        "cuda": "13.0",
+        "bitsandbytes": "0.49.2"
+      }
+    },
+    {
+      "shape": [
+        2147483648
+      ],
+      "numel": 2147483648,
+      "optimizer": "Adam32",
+      "success": true,
+      "error_type": null,
+      "error": null,
+      "traceback": null,
+      "step_time_s": 0.2364,
+      "env": {
+        "gpu": "NVIDIA A100 80GB PCIe",
+        "torch": "2.12.0+cu130",
+        "cuda": "13.0",
+        "bitsandbytes": "0.49.2"
+      }
+    },
+    {
+      "shape": [
+        2147483648
+      ],
+      "numel": 2147483648,
+      "optimizer": "Adam8bit",
+      "success": false,
+      "error_type": "ProcessCrash(RemoteError)",
+      "error": "RemoteError('')",
+      "traceback": null,
+      "step_time_s": null,
+      "env": null
+    },
+    {
+      "shape": [
+        2147483648
+      ],
+      "numel": 2147483648,
+      "optimizer": "SkewAdam",
+      "success": true,
+      "error_type": null,
+      "error": null,
+      "traceback": null,
+      "step_time_s": 1.3,
+      "env": {
+        "gpu": "NVIDIA A100-SXM4-80GB",
+        "torch": "2.12.0+cu130",
+        "cuda": "13.0",
+        "bitsandbytes": "0.49.2"
+      }
+    },
+    {
+      "shape": [
+        46341,
+        46341
+      ],
+      "numel": 2147488281,
+      "optimizer": "Adam32",
+      "success": true,
+      "error_type": null,
+      "error": null,
+      "traceback": null,
+      "step_time_s": 1.0083,
+      "env": {
+        "gpu": "NVIDIA A100 80GB PCIe",
+        "torch": "2.12.0+cu130",
+        "cuda": "13.0",
+        "bitsandbytes": "0.49.2"
+      }
+    },
+    {
+      "shape": [
+        46341,
+        46341
+      ],
+      "numel": 2147488281,
+      "optimizer": "Adam8bit",
+      "success": false,
+      "error_type": "ProcessCrash(RemoteError)",
+      "error": "RemoteError('')",
+      "traceback": null,
+      "step_time_s": null,
+      "env": null
+    },
+    {
+      "shape": [
+        46341,
+        46341
+      ],
+      "numel": 2147488281,
+      "optimizer": "SkewAdam",
+      "success": true,
+      "error_type": null,
+      "error": null,
+      "traceback": null,
+      "step_time_s": 0.6681,
+      "env": {
+        "gpu": "NVIDIA A100-SXM4-80GB",
+        "torch": "2.12.0+cu130",
+        "cuda": "13.0",
+        "bitsandbytes": "0.49.2"
+      }
+    }
+  ]
+}
