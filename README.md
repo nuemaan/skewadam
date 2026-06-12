@@ -34,7 +34,7 @@ The backbone sees every token, so momentum earns its keep there. Each expert see
   <img src="assets/memory.png" width="49%" alt="Peak VRAM and optimizer state by optimizer" />
 </p>
 
-AdamW and Muon converge faster for the first 3,000 steps; SkewAdam passes both by step 4,000 and finishes 14.5% below AdamW. Routing stays balanced throughout — the load-balancing loss sits within 1% of its uniform floor (0.05):
+AdamW and Muon converge faster for the first 3,000 steps; SkewAdam passes both by step 4,000 and finishes 14.5% below AdamW. Routing stays balanced — from step 4,000 the load-balancing loss sits within 1% of its uniform floor (0.05):
 
 <p align="center">
   <img src="assets/aux_loss.png" width="60%" alt="Router load-balancing loss over training" />
@@ -83,7 +83,7 @@ optimizer = SkewAdam([
 Updates are RMS-clipped (Adafactor-style, threshold 1.0), and bfloat16 parameters are written back through a dithered rounding that approximates unbiased stochastic rounding.
 
 > [!IMPORTANT]
-> **Scaling caveat — weight decay.** With bfloat16 master weights, the decoupled weight-decay step (`lr × wd ≈ 1.5e-5` relative) falls two orders of magnitude below the bfloat16 ULP (2⁻⁷) and rounds to a no-op. This was uniform across all optimizers in our comparison — a controlled but effectively unregularized setting. **If you scale this recipe to production horizons, reintroduce weight decay by fusing the decay term into the float32 update before the stochastically rounded cast.** We have not yet validated long-horizon training in that configuration.
+> **Scaling caveat — weight decay.** With bfloat16 master weights, the decoupled weight-decay step (`lr × wd ≈ 1.5e-5` relative) falls more than two orders of magnitude below the bfloat16 ULP (2⁻⁷) and rounds to a no-op. This was uniform across all optimizers in our comparison — a controlled but effectively unregularized setting. **If you scale this recipe to production horizons, reintroduce weight decay by fusing the decay term into the float32 update before the stochastically rounded cast.** We have not yet validated long-horizon training in that configuration.
 
 ## Repository layout
 
