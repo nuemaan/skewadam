@@ -93,6 +93,7 @@ train.py             6.78B MoE training harness + AdamW/Lion/Muon/GaLore baselin
 evaluate.py          lm-eval-harness zero-shot evaluation of saved checkpoints
 plot_metrics.py      Regenerates the paper figures (PDF) from runs/*.json
 runs/                Per-step metrics for the four reported runs (JSON)
+runs/h100/           Adafactor/GaLore/SkewAdam follow-up on an H100 MIG slice
 eval_metrics_*.json  Zero-shot results per optimizer
 figures/             Paper figures (PDF)
 assets/              README figures (PNG) + the script that renders them
@@ -103,7 +104,15 @@ experiments/         Standalone studies (int32 optimizer-state boundary)
 
 - **Model:** decoder-only, 2 blocks (1 dense SwiGLU + 1 MoE of 128 experts, hidden 4096), d_model 4096, GQA 32/8, GPT-2 BPE. 6,784M parameters, ~440M active per token. Shallow by intent: it concentrates 95% of parameters in the expert bank, the population whose optimizer state the study stresses.
 - **Single run per optimizer** at standard learning rates (3e-4 AdamW/SkewAdam, 1e-4 Lion, 0.02 Muon). Lion is known to be learning-rate sensitive; a sweep could narrow its gap.
-- **Adafactor and GaLore** are implemented in `train.py` behind the same interface but were not part of the reported comparison — preliminary runs favored SkewAdam, but the compute budget ran out before matched 10,000-step runs could be completed.
+- **Adafactor and GaLore** were run in a same-protocol follow-up on an NVIDIA H100 NVL (47 GB MIG slice) — same code, data, seed, and shared initialization. SkewAdam, re-run in that batch as the anchor, landed at 108.9 vs 108.4 on the H200, so the protocol transfers across hardware:
+
+  | Optimizer | State (GB) | Peak VRAM (GB) | Val. PPL ↓ |
+  |---|---:|---:|---:|
+  | **SkewAdam** | 1.29 | 31.3 | **108.9** |
+  | Adafactor | 0.01 | 29.6 | 149.5 |
+  | GaLore-style (rank 128) | — | 31.7 | 1,839.9 |
+
+  Adafactor shares SkewAdam's factored estimator but allocates uniformly (no momentum anywhere, everything factored) and plateaus 40 perplexity points behind — the cleanest evidence that the *allocation*, not the factoring, is what pays. The GaLore number is a single untuned configuration of the trainer's own implementation; read it as a caution about low-rank projections of sparse expert gradients, not a verdict on GaLore. Logs and metrics: [runs/h100](runs/h100).
 - Zero-shot scores after 82M tokens are near chance for all optimizers, as expected at that token budget; they are included for completeness.
 - **8-bit optimizer states hit a hard int32 wall** that factored state does not: bitsandbytes' `Adam8bit` kills the process (C++ `exit(1)`, uncatchable) the moment a single parameter tensor reaches 2³¹ elements, while SkewAdam and fp32 Adam cross the boundary cleanly. Measured boundary, repro script, and raw logs in [experiments/int32-boundary](experiments/int32-boundary).
 

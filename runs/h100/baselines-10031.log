@@ -1,0 +1,48 @@
+
+================================================================================
+Optimizer: adafactor
+================================================================================
+BF16/Mixed Master Weights: 12.64 GB | Optimizer state: nan GB
+Gradient Accumulation: 8 micro-steps | Global Batch Size: 64 sequences
+Step 01000 | Train LM Loss 5.6453 | Raw Aux 0.0535 | Val PPL 403.24 | Speed 4216 tok/s | Peak VRAM 29.60 GB
+Step 02000 | Train LM Loss 5.7893 | Raw Aux 0.0512 | Val PPL 286.98 | Speed 4124 tok/s | Peak VRAM 29.60 GB
+Step 03000 | Train LM Loss 5.2695 | Raw Aux 0.0507 | Val PPL 242.74 | Speed 4092 tok/s | Peak VRAM 29.60 GB
+Step 04000 | Train LM Loss 5.3627 | Raw Aux 0.0505 | Val PPL 207.30 | Speed 4077 tok/s | Peak VRAM 29.60 GB
+Step 05000 | Train LM Loss 5.4989 | Raw Aux 0.0503 | Val PPL 187.14 | Speed 4040 tok/s | Peak VRAM 29.60 GB
+Step 06000 | Train LM Loss 5.2007 | Raw Aux 0.0502 | Val PPL 169.16 | Speed 4038 tok/s | Peak VRAM 29.60 GB
+Step 07000 | Train LM Loss 4.9310 | Raw Aux 0.0502 | Val PPL 157.75 | Speed 4036 tok/s | Peak VRAM 29.60 GB
+Step 08000 | Train LM Loss 4.8294 | Raw Aux 0.0501 | Val PPL 152.42 | Speed 4034 tok/s | Peak VRAM 29.60 GB
+Step 09000 | Train LM Loss 5.0899 | Raw Aux 0.0501 | Val PPL 149.59 | Speed 4033 tok/s | Peak VRAM 29.60 GB
+Step 10000 | Train LM Loss 5.3074 | Raw Aux 0.0502 | Val PPL 149.50 | Speed 4032 tok/s | Peak VRAM 29.60 GB
+
+================================================================================
+Optimizer: skewadam
+================================================================================
+BF16/Mixed Master Weights: 12.64 GB | Optimizer state: 1.29 GB
+Gradient Accumulation: 8 micro-steps | Global Batch Size: 64 sequences
+Step 01000 | Train LM Loss 5.8204 | Raw Aux 0.0559 | Val PPL 477.34 | Speed 5727 tok/s | Peak VRAM 31.33 GB
+Step 02000 | Train LM Loss 5.8247 | Raw Aux 0.0518 | Val PPL 293.78 | Speed 3982 tok/s | Peak VRAM 31.33 GB
+Step 03000 | Train LM Loss 5.1494 | Raw Aux 0.0508 | Val PPL 211.92 | Speed 3895 tok/s | Peak VRAM 31.33 GB
+Step 04000 | Train LM Loss 5.2315 | Raw Aux 0.0504 | Val PPL 173.95 | Speed 3852 tok/s | Peak VRAM 31.33 GB
+Step 05000 | Train LM Loss 5.3533 | Raw Aux 0.0503 | Val PPL 155.09 | Speed 3826 tok/s | Peak VRAM 31.33 GB
+Step 06000 | Train LM Loss 4.9562 | Raw Aux 0.0503 | Val PPL 135.71 | Speed 3810 tok/s | Peak VRAM 31.33 GB
+Step 07000 | Train LM Loss 4.6815 | Raw Aux 0.0503 | Val PPL 121.61 | Speed 3798 tok/s | Peak VRAM 31.33 GB
+Step 08000 | Train LM Loss 4.5645 | Raw Aux 0.0503 | Val PPL 114.36 | Speed 3789 tok/s | Peak VRAM 31.33 GB
+Step 09000 | Train LM Loss 4.8505 | Raw Aux 0.0503 | Val PPL 109.57 | Speed 3782 tok/s | Peak VRAM 31.33 GB
+Step 10000 | Train LM Loss 4.5800 | Raw Aux 0.0505 | Val PPL 108.95 | Speed 3778 tok/s | Peak VRAM 31.33 GB
+
+================================================================================
+Optimizer: galore
+================================================================================
+BF16/Mixed Master Weights: 12.64 GB | Optimizer state: nan GB
+Gradient Accumulation: 8 micro-steps | Global Batch Size: 64 sequences
+Step 01000 | Train LM Loss 7.4746 | Raw Aux 0.0500 | Val PPL 2703.06 | Speed 4192 tok/s | Peak VRAM 31.66 GB
+Step 02000 | Train LM Loss 7.8022 | Raw Aux 0.0498 | Val PPL 2256.76 | Speed 4201 tok/s | Peak VRAM 31.66 GB
+Step 03000 | Train LM Loss 7.2463 | Raw Aux 0.0498 | Val PPL 2070.42 | Speed 4204 tok/s | Peak VRAM 31.66 GB
+Step 04000 | Train LM Loss 7.6507 | Raw Aux 0.0494 | Val PPL 1965.64 | Speed 4205 tok/s | Peak VRAM 31.66 GB
+Step 05000 | Train LM Loss 7.5368 | Raw Aux 0.0491 | Val PPL 1901.66 | Speed 4206 tok/s | Peak VRAM 31.66 GB
+Step 06000 | Train LM Loss 7.5284 | Raw Aux 0.0491 | Val PPL 1855.05 | Speed 4207 tok/s | Peak VRAM 31.66 GB
+Step 07000 | Train LM Loss 7.1424 | Raw Aux 0.0487 | Val PPL 1829.03 | Speed 4207 tok/s | Peak VRAM 31.66 GB
+Step 08000 | Train LM Loss 7.3124 | Raw Aux 0.0487 | Val PPL 1821.69 | Speed 4208 tok/s | Peak VRAM 31.66 GB
+Step 09000 | Train LM Loss 7.3504 | Raw Aux 0.0487 | Val PPL 1825.95 | Speed 4208 tok/s | Peak VRAM 31.66 GB
+Step 10000 | Train LM Loss 7.8944 | Raw Aux 0.0510 | Val PPL 1839.86 | Speed 4209 tok/s | Peak VRAM 31.66 GB
