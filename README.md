@@ -112,6 +112,8 @@ experiments/         Standalone studies (int32 optimizer-state boundary)
   | Adafactor | 0.01 | 29.6 | 149.5 |
   | GaLore-style (rank 128) | — | 31.7 | 1,839.9 |
 
+  State sizes are analytic, like every state number in the paper (the trainer's accounting helper covers only adam/lion/muon/skewadam and logs `nan` for the other two — that's a logging gap, not a measurement). Adafactor's 0.01 GB follows from its published layout: factored second moments only, no momentum. The measured VRAM agrees: Adafactor peaks 1.7 GB below SkewAdam, which is SkewAdam's 1.29 GB of state that Adafactor doesn't carry. GaLore-style is left "—" rather than guessed.
+
   Adafactor shares SkewAdam's factored estimator but allocates uniformly (no momentum anywhere, everything factored) and plateaus 40 perplexity points behind — the cleanest evidence that the *allocation*, not the factoring, is what pays. The GaLore number is a single untuned configuration of the trainer's own implementation; read it as a caution about low-rank projections of sparse expert gradients, not a verdict on GaLore. Logs and metrics: [runs/h100](runs/h100).
 - Zero-shot scores after 82M tokens are near chance for all optimizers, as expected at that token budget; they are included for completeness.
 - **8-bit optimizer states hit a hard int32 wall** that factored state does not: bitsandbytes' `Adam8bit` kills the process (C++ `exit(1)`, uncatchable) the moment a single parameter tensor reaches 2³¹ elements, while SkewAdam and fp32 Adam cross the boundary cleanly. Measured boundary, repro script, and raw logs in [experiments/int32-boundary](experiments/int32-boundary).
