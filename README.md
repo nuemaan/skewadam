@@ -94,6 +94,7 @@ evaluate.py          lm-eval-harness zero-shot evaluation of saved checkpoints
 plot_metrics.py      Regenerates the paper figures (PDF) from runs/*.json
 runs/                Per-step metrics for the four reported runs (JSON)
 runs/h100/           Adafactor/GaLore/SkewAdam follow-up on an H100 MIG slice
+runs/amd-ablation/   Tier ablation (4 SkewAdam variants) on an MI300X
 eval_metrics_*.json  Zero-shot results per optimizer
 figures/             Paper figures (PDF)
 assets/              README figures (PNG) + the script that renders them
@@ -114,7 +115,17 @@ experiments/         Standalone studies (int32 optimizer-state boundary)
 
   State sizes are analytic, like every state number in the paper (the trainer's accounting helper covers only adam/lion/muon/skewadam and logs `nan` for the other two — that's a logging gap, not a measurement). Adafactor's 0.01 GB follows from its published layout: factored second moments only, no momentum. The measured VRAM agrees: Adafactor peaks 1.7 GB below SkewAdam, which is SkewAdam's 1.29 GB of state that Adafactor doesn't carry. GaLore-style is left "—" rather than guessed.
 
-  Adafactor shares SkewAdam's factored estimator but allocates uniformly (no momentum anywhere, everything factored) and plateaus 40 perplexity points behind — the cleanest evidence that the *allocation*, not the factoring, is what pays. The GaLore number is a single untuned configuration of the trainer's own implementation; read it as a caution about low-rank projections of sparse expert gradients, not a verdict on GaLore. Logs and metrics: [runs/h100](runs/h100).
+  Adafactor shares SkewAdam's factored estimator but **drops momentum entirely** and plateaus 40 perplexity points behind. The GaLore number is a single untuned configuration of the trainer's own implementation; read it as a caution about low-rank projections of sparse expert gradients, not a verdict on GaLore. Logs and metrics: [runs/h100](runs/h100).
+- **Tier ablation** (MI300X, 192 GB, same protocol — [runs/amd-ablation](runs/amd-ablation)). Toggling each tier of the policy one at a time:
+
+  | Variant | State (GB) | Peak VRAM (GB) | Val. PPL |
+  |---|---:|---:|---:|
+  | **SkewAdam** (full policy) | **1.29** | **31.4** | 108.9 |
+  | + momentum on experts | 25.29 | 55.4 | 108.7 |
+  | factored router | 1.28 | 31.4 | 108.2 |
+  | uniform (momentum + factored everywhere) | 25.29 | 55.4 | 108.3 |
+
+  All four are a **perplexity tie** (108.2–108.9, single-seed noise) with identical load balance (~0.050); what varies 20× is optimizer state. So the honest reading is *memory-at-parity*, not a perplexity advantage: adding momentum to the experts costs 24 GB and buys nothing, which is exactly what the policy discards — full-momentum perplexity is recovered from backbone momentum alone. It also relocates the Adafactor gap: `uniform` (uniform allocation *with* momentum) also reaches ~108, so the gap to Adafactor is **momentum + its decay schedule, not the tiered allocation**. SkewAdam here (108.9) matches its H200 (108.4) and H100 (108.9) numbers — a third platform, second vendor.
 - Zero-shot scores after 82M tokens are near chance for all optimizers, as expected at that token budget; they are included for completeness.
 - **8-bit optimizer states hit a hard int32 wall** that factored state does not: bitsandbytes' `Adam8bit` kills the process (C++ `exit(1)`, uncatchable) the moment a single parameter tensor reaches 2³¹ elements, while SkewAdam and fp32 Adam cross the boundary cleanly. Measured boundary, repro script, and raw logs in [experiments/int32-boundary](experiments/int32-boundary).
 
