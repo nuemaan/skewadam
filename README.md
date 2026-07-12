@@ -105,11 +105,11 @@ experiments/         Standalone studies (int32 optimizer-state boundary)
 
 - **Model:** decoder-only, 2 blocks (1 dense SwiGLU + 1 MoE of 128 experts, hidden 4096), d_model 4096, GQA 32/8, GPT-2 BPE. 6,784M parameters, ~440M active per token. Shallow by intent: it concentrates 95% of parameters in the expert bank, the population whose optimizer state the study stresses.
 - **Single run per optimizer** at standard learning rates (3e-4 AdamW/SkewAdam, 1e-4 Lion, 0.02 Muon). Lion is known to be learning-rate sensitive; a sweep could narrow its gap.
-- **Adafactor and GaLore** were run in a same-protocol follow-up on an NVIDIA H100 NVL (47 GB MIG slice) — same code, data, seed, and shared initialization. SkewAdam, re-run in that batch as the anchor, landed at 108.9 vs 108.4 on the H200, so the protocol transfers across hardware:
+- **Adafactor and GaLore** were run in a same-protocol follow-up on an NVIDIA H100 NVL (47 GB MIG slice) — same code, data, seed, and shared initialization. SkewAdam, re-run in that batch as the anchor, landed at 109.0 vs 108.4 on the H200, so the protocol transfers across hardware:
 
   | Optimizer | State (GB) | Peak VRAM (GB) | Val. PPL ↓ |
   |---|---:|---:|---:|
-  | **SkewAdam** | 1.29 | 31.3 | **108.9** |
+  | **SkewAdam** | 1.29 | 31.3 | **109.0** |
   | Adafactor | 0.01 | 29.6 | 149.5 |
   | GaLore-style (rank 128) | — | 31.7 | 1,839.9 |
 
@@ -125,7 +125,7 @@ experiments/         Standalone studies (int32 optimizer-state boundary)
   | factored router | 1.28 | 31.4 | 108.2 |
   | uniform (momentum + factored everywhere) | 25.29 | 55.4 | 108.3 |
 
-  All four are a **perplexity tie** (108.2–108.9, single-seed noise) with identical load balance (~0.050); what varies 20× is optimizer state. So the honest reading is *memory-at-parity*, not a perplexity advantage: adding momentum to the experts costs 24 GB and buys nothing, which is exactly what the policy discards — full-momentum perplexity is recovered from backbone momentum alone. It also relocates the Adafactor gap: `uniform` (uniform allocation *with* momentum) also reaches ~108, so the gap to Adafactor is **momentum + its decay schedule, not the tiered allocation**. SkewAdam here (108.9) matches its H200 (108.4) and H100 (108.9) numbers — a third platform, second vendor.
+  All four are a **perplexity tie** (108.2–108.9, single-seed noise) with identical load balance (~0.050); what varies 20× is optimizer state. So the honest reading is *memory-at-parity*, not a perplexity advantage: adding momentum to the experts costs 24 GB and buys nothing, which is exactly what the policy discards — full-momentum perplexity is recovered from backbone momentum alone. It also relocates the Adafactor gap: `uniform` (uniform allocation *with* momentum) also reaches ~108, so the gap to Adafactor is **momentum + its decay schedule, not the tiered allocation**. SkewAdam here (108.9) matches its H200 (108.4) and H100 (109.0) numbers — a third platform, second vendor.
 - Zero-shot scores after 82M tokens are near chance for all optimizers, as expected at that token budget; they are included for completeness.
 - **8-bit optimizer states hit a hard int32 wall** that factored state does not: bitsandbytes' `Adam8bit` kills the process (C++ `exit(1)`, uncatchable) the moment a single parameter tensor reaches 2³¹ elements, while SkewAdam and fp32 Adam cross the boundary cleanly. Measured boundary, repro script, and raw logs in [experiments/int32-boundary](experiments/int32-boundary).
 
