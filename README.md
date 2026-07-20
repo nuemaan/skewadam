@@ -95,6 +95,7 @@ plot_metrics.py      Regenerates the paper figures (PDF) from runs/*.json
 runs/                Per-step metrics for the four reported runs (JSON)
 runs/h100/           Adafactor/GaLore/SkewAdam follow-up on an H100 MIG slice
 runs/amd-ablation/   Tier ablation (4 SkewAdam variants) on an MI300X
+runs/lr-sweep/       LR sweeps for AdamW/Adafactor (MI300X), seeds included
 eval_metrics_*.json  Zero-shot results per optimizer
 figures/             Paper figures (PDF)
 assets/              README figures (PNG) + the script that renders them
@@ -126,6 +127,15 @@ experiments/         Standalone studies (int32 optimizer-state boundary)
   | uniform (momentum + factored everywhere) | 25.29 | 55.4 | 108.3 |
 
   All four are a **perplexity tie** (108.2–108.9, single-seed noise) with identical load balance (~0.050); what varies 20× is optimizer state. So the honest reading is *memory-at-parity*, not a perplexity advantage: adding momentum to the experts costs 24 GB and buys nothing, which is exactly what the policy discards — full-momentum perplexity is recovered from backbone momentum alone. It also relocates the Adafactor gap: `uniform` (uniform allocation *with* momentum) also reaches ~108, so the gap to Adafactor is **momentum + its decay schedule, not the tiered allocation**. SkewAdam here (108.9) matches its H200 (108.4) and H100 (109.0) numbers — a third platform, second vendor.
+- **Learning-rate sweeps for the strongest baselines** (MI300X, same protocol — [runs/lr-sweep](runs/lr-sweep)). SkewAdam was deliberately left untuned; the question is whether *tuned* baselines close the gap to it:
+
+  | Optimizer | LRs swept | Best | Best Val. PPL |
+  |---|---|---|---:|
+  | AdamW | 1e-4, 3e-4, 1e-3 | 1e-4 | 118.5 ± 0.5 (3 seeds) |
+  | Adafactor | 3e-5 … 3e-3 (5 points) | 1e-4 | 139.7 (2 seeds) |
+  | **SkewAdam (untuned)** | — | 3e-4 | **108.4–109.0** (3 GPUs) |
+
+  Tuning helps the baselines (AdamW 126.8→118.5, Adafactor 149.5→139.7) but doesn't close the gap: untuned SkewAdam leads the best tuned AdamW by ~10 perplexity points (~20 seed-level standard deviations) and tuned Adafactor by ~31. Both minima are bracketed (Adafactor on both sides; AdamW from above — 3e-5 undertrains at this budget). The tuned AdamW–Adafactor separation is the ablation's momentum story again, between independent optimizers.
 - Zero-shot scores after 82M tokens are near chance for all optimizers, as expected at that token budget; they are included for completeness.
 - **8-bit optimizer states hit a hard int32 wall** that factored state does not: bitsandbytes' `Adam8bit` kills the process (C++ `exit(1)`, uncatchable) the moment a single parameter tensor reaches 2³¹ elements, while SkewAdam and fp32 Adam cross the boundary cleanly. Measured boundary, repro script, and raw logs in [experiments/int32-boundary](experiments/int32-boundary).
 
