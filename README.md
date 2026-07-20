@@ -6,7 +6,7 @@
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/)
 [![PyTorch](https://img.shields.io/badge/PyTorch-2.x-ee4c2c.svg)](https://pytorch.org/)
 
-Training a 6.78B-parameter Mixture-of-Experts model with AdamW allocates **50.6 GB of optimizer state** to update **12.6 GB of bfloat16 weights**. SkewAdam cuts that state to **1.29 GB (−97.4%)** and peak training memory from **81.4 GB to 31.3 GB** — small enough for a single 40 GB GPU — while reaching **lower validation perplexity than AdamW, Muon, and Lion** under matched conditions.
+Training a 6.78B-parameter Mixture-of-Experts model with AdamW allocates **50.6 GB of optimizer state** to update **12.6 GB of bfloat16 weights**. SkewAdam cuts that state to **1.29 GB (−97.4%)** and peak training memory from **81.4 GB to 31.3 GB** — small enough for a single 40 GB GPU — while reaching **lower validation perplexity than AdamW, Muon, and Lion** under matched conditions — a lead that survives sweeping the baselines' learning rates. A tier ablation locates the sources: the memory saving comes from the allocation, the perplexity from keeping momentum.
 
 The idea is simple: an MoE is not a homogeneous bag of parameters, so its optimizer shouldn't treat it like one. SkewAdam *skews* its state budget toward where it pays.
 
@@ -99,13 +99,13 @@ runs/lr-sweep/       LR sweeps for AdamW/Adafactor (MI300X), seeds included
 eval_metrics_*.json  Zero-shot results per optimizer
 figures/             Paper figures (PDF)
 assets/              README figures (PNG) + the script that renders them
-experiments/         Standalone studies (int32 optimizer-state boundary)
+experiments/         Standalone studies: int32 boundary, tier ablation, LR sweeps
 ```
 
 ## Notes and caveats
 
 - **Model:** decoder-only, 2 blocks (1 dense SwiGLU + 1 MoE of 128 experts, hidden 4096), d_model 4096, GQA 32/8, GPT-2 BPE. 6,784M parameters, ~440M active per token. Shallow by intent: it concentrates 95% of parameters in the expert bank, the population whose optimizer state the study stresses.
-- **Single run per optimizer** at standard learning rates (3e-4 AdamW/SkewAdam, 1e-4 Lion, 0.02 Muon). Lion is known to be learning-rate sensitive; a sweep could narrow its gap.
+- **Main-table numbers are single runs** at standard learning rates (3e-4 AdamW/SkewAdam, 1e-4 Lion, 0.02 Muon). AdamW and Adafactor were later swept over bracketing LR grids with repeated seeds (see below); Lion and Muon remain at single untuned rates, and Lion in particular is learning-rate sensitive.
 - **Adafactor and GaLore** were run in a same-protocol follow-up on an NVIDIA H100 NVL (47 GB MIG slice) — same code, data, seed, and shared initialization. SkewAdam, re-run in that batch as the anchor, landed at 109.0 vs 108.4 on the H200, so the protocol transfers across hardware:
 
   | Optimizer | State (GB) | Peak VRAM (GB) | Val. PPL ↓ |
