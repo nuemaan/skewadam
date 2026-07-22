@@ -1,10 +1,11 @@
 # SkewAdam
-[![arXiv](https://img.shields.io/badge/arXiv-2607.19058-b31b1b.svg)](https://arxiv.org/abs/2607.19058)
+
 **Tiered optimizer state allocation for memory-efficient Mixture-of-Experts training.**
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/)
 [![PyTorch](https://img.shields.io/badge/PyTorch-2.x-ee4c2c.svg)](https://pytorch.org/)
+[![arXiv](https://img.shields.io/badge/arXiv-2607.19058-b31b1b.svg)](https://arxiv.org/abs/2607.19058)
 
 Training a 6.78B-parameter Mixture-of-Experts model with AdamW allocates **50.6 GB of optimizer state** to update **12.6 GB of bfloat16 weights**. SkewAdam cuts that state to **1.29 GB (−97.4%)** and peak training memory from **81.4 GB to 31.3 GB** — small enough for a single 40 GB GPU — while reaching **lower validation perplexity than AdamW, Muon, and Lion** under matched conditions — a lead that survives sweeping the baselines' learning rates. A tier ablation locates the sources: the memory saving comes from the allocation, the perplexity from keeping momentum.
 
@@ -159,7 +160,7 @@ If you use SkewAdam in your research, please cite it as follows:
   primaryClass={cs.LG},
   url={[https://arxiv.org/abs/2607.19058](https://arxiv.org/abs/2607.19058)}
 }
-
+```
 ## License
 
 [MIT](LICENSE)
