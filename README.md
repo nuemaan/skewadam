@@ -1,5 +1,5 @@
 # SkewAdam
-
+[![arXiv](https://img.shields.io/badge/arXiv-2607.19058-b31b1b.svg)](https://arxiv.org/abs/2607.19058)
 **Tiered optimizer state allocation for memory-efficient Mixture-of-Experts training.**
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
@@ -141,21 +141,24 @@ experiments/         Standalone studies: int32 boundary, tier ablation, LR sweep
 
 ## Support this work
 
-This project was self-funded on rented GPU time, and the compute budget — not the experimental design — set the scale of the study. Planned next steps: deeper multi-layer MoE topologies, longer horizons with properly fused weight decay, and matched Adafactor/GaLore baselines. If you'd like to collaborate or can help with compute credits, reach out: **nuemaan.research@gmail.com**.
+This project was self-funded on rented GPU time, and the compute budget — not the experimental design — set the scale of the study. Planned next steps: deeper multi-layer MoE topologies, longer horizons with properly fused weight decay, and multi-seed replication. If you'd like to collaborate or can help with compute credits, reach out: **nuemaan.research@gmail.com**.
 
 ## Citation
 
-Paper link coming soon (arXiv preprint under preparation). In the meantime:
+Read the full paper on arXiv: [Where Should Optimizer State Live? Tiered State Allocation for Memory-Efficient Mixture-of-Experts Training](https://arxiv.org/abs/2607.19058)
+
+If you use SkewAdam in your research, please cite it as follows:
 
 ```bibtex
 @misc{malik2026skewadam,
-  title  = {Where Should Optimizer State Live? Tiered State Allocation for
-            Memory-Efficient Mixture-of-Experts Training},
-  author = {Malik, Nuemaan},
-  year   = {2026},
-  note   = {Preprint},
+  title={Where Should Optimizer State Live? Tiered State Allocation for Memory-Efficient Mixture-of-Experts Training}, 
+  author={Nuemaan Malik},
+  year={2026},
+  eprint={2607.19058},
+  archivePrefix={arXiv},
+  primaryClass={cs.LG},
+  url={[https://arxiv.org/abs/2607.19058](https://arxiv.org/abs/2607.19058)}
 }
-```
 
 ## License
 
