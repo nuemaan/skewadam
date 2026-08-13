@@ -25,10 +25,10 @@ count (the 2-D shape fails identically), and the console output at failure is:
 Error invalid argument at line 226 in file /src/csrc/ops.cu
 ```
 
-followed by process exit code 1 — no exception reaches Python, so a long
+followed by process exit code 1. No exception reaches Python, so a long
 training run dies without a checkpoint flush. SkewAdam and fp32 Adam cross
 the boundary cleanly because they use only native PyTorch ops with 64-bit
-indexing; the 2-D case exercises SkewAdam's factored path.
+indexing. The 2-D case exercises SkewAdam's factored path.
 
 Reported upstream on bitsandbytes issue
 [#1785](https://github.com/bitsandbytes-foundation/bitsandbytes/issues/1785),

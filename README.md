@@ -7,17 +7,17 @@
 [![PyTorch](https://img.shields.io/badge/PyTorch-2.x-ee4c2c.svg)](https://pytorch.org/)
 [![arXiv](https://img.shields.io/badge/arXiv-2607.19058-b31b1b.svg)](https://arxiv.org/abs/2607.19058)
 
-Training a 6.78B-parameter Mixture-of-Experts model with AdamW allocates **50.6 GB of optimizer state** to update **12.6 GB of bfloat16 weights**. SkewAdam cuts that state to **1.29 GB (−97.4%)** and peak training memory from **81.4 GB to 31.3 GB** — small enough for a single 40 GB GPU — while reaching **lower validation perplexity than AdamW, Muon, and Lion** under matched conditions — a lead that survives sweeping the baselines' learning rates. A tier ablation locates the sources: the memory saving comes from the allocation, the perplexity from keeping momentum.
+Training a 6.78B-parameter Mixture-of-Experts model with AdamW allocates **50.6 GB of optimizer state** to update **12.6 GB of bfloat16 weights**. SkewAdam cuts that state to **1.29 GB (−97.4%)** and peak training memory from **81.4 GB to 31.3 GB**, small enough for a single 40 GB GPU, while reaching **lower validation perplexity than AdamW, Muon, and Lion** under matched conditions. That lead survives sweeping the baselines' learning rates. A tier ablation reaches the same perplexity carrying twenty times the state, so the tiers buy memory rather than accuracy. Same-platform runs place the perplexity gaps elsewhere. Removing momentum costs 31 points and replacing the factored second moment and its update clipping with a full one costs 10.
 
-The idea is simple: an MoE is not a homogeneous bag of parameters, so its optimizer shouldn't treat it like one. SkewAdam *skews* its state budget toward where it pays.
+An MoE's parameter populations differ in how often their gradients arrive. SkewAdam sizes each one's optimizer state to match.
 
 | Tier | Share of params | Momentum | Second moment | State cost |
 |---|---|---|---|---|
 | **Backbone** (embeddings, attention, dense FFN) | 5.0% | fp32 | factored | 1.27 GB |
-| **Experts** (128 SwiGLU experts) | 95.0% | none | factored | 12.6 MB |
-| **Router** (top-2 gate) | 0.008% | none | full fp32 | 2.1 MB |
+| **Experts** (128 SwiGLU experts) | 95.0% | none | factored | 12.0 MB |
+| **Router** (top-2 gate) | 0.008% | none | full fp32 | 2.0 MB |
 
-The backbone sees every token, so momentum earns its keep there. Each expert sees ~1/64 of tokens under top-2-of-128 routing, so experts keep only a factored (row/column) second moment — dropping their momentum buffer alone saves 24 GB. The router is tiny but steers all the traffic, so it keeps exact per-logit second moments for 2 MB.
+The backbone sees every token, so momentum there smooths a signal present at every step. Each expert sees ~1/64 of tokens under top-2-of-128 routing, so experts keep only a factored (row and column) second moment. Dropping their momentum buffer alone saves 24 GB. The router is tiny but steers all the traffic, so it keeps exact per-logit second moments for 2 MB.
 
 ## Results
 
@@ -35,13 +35,13 @@ The backbone sees every token, so momentum earns its keep there. Each expert see
   <img src="assets/memory.png" width="49%" alt="Peak VRAM and optimizer state by optimizer" />
 </p>
 
-AdamW and Muon converge faster for the first 3,000 steps; SkewAdam passes both by step 4,000 and finishes 14.5% below AdamW. Routing stays balanced — from step 4,000 the load-balancing loss sits within 1% of its uniform floor (0.05):
+AdamW and Muon converge faster for the first 3,000 steps. SkewAdam passes both by step 4,000 and finishes 14.5% below AdamW. Routing stays balanced, with the load-balancing loss sitting within 1% of its uniform floor (0.05) from step 4,000 onward:
 
 <p align="center">
   <img src="assets/aux_loss.png" width="60%" alt="Router load-balancing loss over training" />
 </p>
 
-Every number above is read directly from the JSON logs in this repository (`runs/metrics_*.json`, `eval_metrics_*.json`) — nothing is hand-entered.
+Every number above is read directly from the JSON logs in this repository (`runs/metrics_*.json`, `eval_metrics_*.json`) rather than hand-entered.
 
 ## Quickstart
 
@@ -62,7 +62,7 @@ pip install matplotlib seaborn
 python plot_metrics.py
 ```
 
-Training streams OpenWebText and splits it 95/5 by document hash, so the validation set is identical across runs and machines. The full run (10,000 steps × 64 sequences × 128 tokens) was done on one H200; with SkewAdam it fits comfortably on any 40 GB card.
+Training streams OpenWebText and splits it 95/5 by document hash, so the validation set is identical across runs and machines. The full run (10,000 steps × 64 sequences × 128 tokens) was done on one H200. With SkewAdam it fits comfortably on any 40 GB card.
 
 ## Using SkewAdam in your own training loop
 
@@ -84,7 +84,7 @@ optimizer = SkewAdam([
 Updates are RMS-clipped (Adafactor-style, threshold 1.0), and bfloat16 parameters are written back through a dithered rounding that approximates unbiased stochastic rounding.
 
 > [!IMPORTANT]
-> **Scaling caveat — weight decay.** With bfloat16 master weights, the decoupled weight-decay step (`lr × wd ≈ 1.5e-5` relative) falls more than two orders of magnitude below the bfloat16 ULP (2⁻⁷) and rounds to a no-op. This was uniform across all optimizers in our comparison — a controlled but effectively unregularized setting. **If you scale this recipe to production horizons, reintroduce weight decay by fusing the decay term into the float32 update before the stochastically rounded cast.** We have not yet validated long-horizon training in that configuration.
+> **Scaling caveat, weight decay.** With bfloat16 master weights, the decoupled weight-decay step (`lr × wd ≈ 1.5e-5` relative) falls more than two orders of magnitude below the bfloat16 ULP (2⁻⁷) and rounds to a no-op. This was uniform across all optimizers in the comparison, a controlled but effectively unregularized setting. **If you scale this recipe to production horizons, reintroduce weight decay by fusing the decay term into the float32 update before the stochastically rounded cast.** We have not yet validated long-horizon training in that configuration.
 
 ## Repository layout
 
@@ -105,9 +105,9 @@ experiments/         Standalone studies: int32 boundary, tier ablation, LR sweep
 
 ## Notes and caveats
 
-- **Model:** decoder-only, 2 blocks (1 dense SwiGLU + 1 MoE of 128 experts, hidden 4096), d_model 4096, GQA 32/8, GPT-2 BPE. 6,784M parameters, ~440M active per token. Shallow by intent: it concentrates 95% of parameters in the expert bank, the population whose optimizer state the study stresses.
-- **Main-table numbers are single runs** at standard learning rates (3e-4 AdamW/SkewAdam, 1e-4 Lion, 0.02 Muon). AdamW and Adafactor were later swept over bracketing LR grids with repeated seeds (see below); Lion and Muon remain at single untuned rates, and Lion in particular is learning-rate sensitive.
-- **Adafactor and GaLore** were run in a same-protocol follow-up on an NVIDIA H100 NVL (47 GB MIG slice) — same code, data, seed, and shared initialization. SkewAdam, re-run in that batch as the anchor, landed at 109.0 vs 108.4 on the H200, so the protocol transfers across hardware:
+- **Model:** decoder-only, 2 blocks (1 dense SwiGLU + 1 MoE of 128 experts, hidden 4096), d_model 4096, GQA 32/8, GPT-2 BPE. 6,784M parameters, ~440M active per token. Shallow by intent, since it concentrates 95% of parameters in the expert bank, the population whose optimizer state the study stresses.
+- **Main-table numbers are single runs** at standard learning rates (3e-4 AdamW/SkewAdam, 1e-4 Lion, 0.02 Muon). AdamW and Adafactor were later swept over bracketing LR grids with repeated seeds (see below). Lion and Muon remain at single untuned rates, and Lion in particular is learning-rate sensitive.
+- **Adafactor and GaLore** were run in a same-protocol follow-up on an NVIDIA H100 NVL (47 GB MIG slice) with the same code, data, seed, and shared initialization. SkewAdam, re-run in that batch as the anchor, landed at 109.0 against 108.4 on the H200, so the protocol transfers across hardware:
 
   | Optimizer | State (GB) | Peak VRAM (GB) | Val. PPL ↓ |
   |---|---:|---:|---:|
@@ -115,10 +115,10 @@ experiments/         Standalone studies: int32 boundary, tier ablation, LR sweep
   | Adafactor | 0.01 | 29.6 | 149.5 |
   | GaLore-style (rank 128) | — | 31.7 | 1,839.9 |
 
-  State sizes are analytic, like every state number in the paper (the trainer's accounting helper covers only adam/lion/muon/skewadam and logs `nan` for the other two — that's a logging gap, not a measurement). Adafactor's 0.01 GB follows from its published layout: factored second moments only, no momentum. The measured VRAM agrees: Adafactor peaks 1.7 GB below SkewAdam, which is SkewAdam's 1.29 GB of state that Adafactor doesn't carry. GaLore-style is left "—" rather than guessed.
+  State sizes are analytic, like every state number in the paper (the trainer's accounting helper covers only adam/lion/muon/skewadam and logs `nan` for the other two, which is a logging gap rather than a measurement). Adafactor's 0.01 GB follows from its published layout of factored second moments and no momentum. The measured VRAM agrees, with Adafactor peaking 1.7 GB below SkewAdam, which is the 1.29 GB of state that Adafactor doesn't carry. GaLore-style is left blank rather than guessed.
 
-  Adafactor shares SkewAdam's factored estimator but **drops momentum entirely** and plateaus 40 perplexity points behind. The GaLore number is a single untuned configuration of the trainer's own implementation; read it as a caution about low-rank projections of sparse expert gradients, not a verdict on GaLore. Logs and metrics: [runs/h100](runs/h100).
-- **Tier ablation** (MI300X, 192 GB, same protocol — [runs/amd-ablation](runs/amd-ablation)). Toggling each tier of the policy one at a time:
+  Adafactor shares SkewAdam's factored estimator but **drops momentum entirely** and plateaus 40 perplexity points behind. The GaLore number is a single untuned configuration of the trainer's own implementation. Read it as a caution about low-rank projections of sparse expert gradients, not a verdict on GaLore. Logs and metrics are in [runs/h100](runs/h100).
+- **Tier ablation** (MI300X, 192 GB, same protocol, [runs/amd-ablation](runs/amd-ablation)). Toggling each tier of the policy one at a time:
 
   | Variant | State (GB) | Peak VRAM (GB) | Val. PPL |
   |---|---:|---:|---:|
@@ -127,22 +127,22 @@ experiments/         Standalone studies: int32 boundary, tier ablation, LR sweep
   | factored router | 1.28 | 31.4 | 108.2 |
   | uniform (momentum + factored everywhere) | 25.29 | 55.4 | 108.3 |
 
-  All four are a **perplexity tie** (108.2–108.9, single-seed noise) with identical load balance (~0.050); what varies 20× is optimizer state. So the honest reading is *memory-at-parity*, not a perplexity advantage: adding momentum to the experts costs 24 GB and buys nothing, which is exactly what the policy discards — full-momentum perplexity is recovered from backbone momentum alone. It also relocates the Adafactor gap: `uniform` (uniform allocation *with* momentum) also reaches ~108, so the gap to Adafactor is **momentum + its decay schedule, not the tiered allocation**. SkewAdam here (108.9) matches its H200 (108.4) and H100 (109.0) numbers — a third platform, second vendor.
-- **Learning-rate sweeps for the strongest baselines** (MI300X, same protocol — [runs/lr-sweep](runs/lr-sweep)). SkewAdam was deliberately left untuned; the question is whether *tuned* baselines close the gap to it:
+  All four are a **perplexity tie** (108.2–108.9, single-seed noise) with identical load balance (~0.050), while optimizer state varies 20×. The honest reading is *memory-at-parity* rather than a perplexity advantage. Adding momentum to the experts costs 24 GB and buys nothing, which is exactly what the policy discards, and full-momentum perplexity is recovered from backbone momentum alone. These runs also relocate the baseline gaps. Uniform allocation *with* momentum also reaches ~108, so the 31-point gap to tuned Adafactor is the absence of momentum rather than the tiered allocation. The 10-point gap to tuned AdamW is **not** momentum either, since AdamW carries it everywhere. What differs there is the factored second moment together with its update clipping, which these runs cannot separate. SkewAdam here (108.9) matches its H200 (108.4) and H100 (109.0) numbers on a third platform and second vendor.
+- **Learning-rate sweeps for the strongest baselines** (MI300X, same protocol, [runs/lr-sweep](runs/lr-sweep)). SkewAdam was deliberately left untuned. The question is whether *tuned* baselines close the gap to it:
 
   | Optimizer | LRs swept | Best | Best Val. PPL |
   |---|---|---|---:|
   | AdamW | 1e-4, 3e-4, 1e-3 | 1e-4 | 118.5 ± 0.5 (3 seeds) |
-  | Adafactor | 3e-5 … 3e-3 (5 points) | 1e-4 | 139.7 (2 seeds) |
+  | Adafactor | 3e-5 … 3e-3 (5 points) | 1e-4 | 139.8 (2 seeds) |
   | **SkewAdam (untuned)** | — | 3e-4 | **108.4–109.0** (3 GPUs) |
 
-  Tuning helps the baselines (AdamW 126.8→118.5, Adafactor 149.5→139.7) but doesn't close the gap: untuned SkewAdam leads the best tuned AdamW by ~10 perplexity points (~20 seed-level standard deviations) and tuned Adafactor by ~31. Both minima are bracketed (Adafactor on both sides; AdamW from above — 3e-5 undertrains at this budget). The tuned AdamW–Adafactor separation is the ablation's momentum story again, between independent optimizers.
-- Zero-shot scores after 82M tokens are near chance for all optimizers, as expected at that token budget; they are included for completeness.
-- **8-bit optimizer states hit a hard int32 wall** that factored state does not: bitsandbytes' `Adam8bit` kills the process (C++ `exit(1)`, uncatchable) the moment a single parameter tensor reaches 2³¹ elements, while SkewAdam and fp32 Adam cross the boundary cleanly. Measured boundary, repro script, and raw logs in [experiments/int32-boundary](experiments/int32-boundary).
+  Tuning helps the baselines (AdamW 126.8→118.5, Adafactor 149.5→139.8) without closing the gap. Untuned SkewAdam leads the best tuned AdamW by ~10 perplexity points (~20 seed-level standard deviations) and tuned Adafactor by ~31. Both minima are bracketed, Adafactor on both sides and AdamW from above, since 3e-5 undertrains at this budget. The separation between tuned AdamW and tuned Adafactor is the ablation's momentum story again, now between independent optimizers. All perplexities are final-step values, the same metric used throughout.
+- Zero-shot scores after 82M tokens are near chance for all optimizers, as expected at that token budget. They are included for completeness.
+- **8-bit optimizer states hit a hard int32 wall** that factored state does not. The bitsandbytes `Adam8bit` kernel kills the process (C++ `exit(1)`, uncatchable) the moment a single parameter tensor reaches 2³¹ elements, while SkewAdam and fp32 Adam cross the boundary cleanly. Measured boundary, repro script, and raw logs in [experiments/int32-boundary](experiments/int32-boundary).
 
 ## Support this work
 
-This project was self-funded on rented GPU time, and the compute budget — not the experimental design — set the scale of the study. Planned next steps: deeper multi-layer MoE topologies, longer horizons with properly fused weight decay, and multi-seed replication. If you'd like to collaborate or can help with compute credits, reach out: **nuemaan.research@gmail.com**.
+This project was self-funded on rented GPU time, and the compute budget rather than the experimental design set the scale of the study. Planned next steps are deeper multi-layer MoE topologies, longer horizons with properly fused weight decay, and multi-seed replication. If you'd like to collaborate or can help with compute credits, reach out: **nuemaan.research@gmail.com**.
 
 ## Citation
 
@@ -152,15 +152,16 @@ If you use SkewAdam in your research, please cite it as follows:
 
 ```bibtex
 @misc{malik2026skewadam,
-  title={Where Should Optimizer State Live? Tiered State Allocation for Memory-Efficient Mixture-of-Experts Training}, 
+  title={Where Should Optimizer State Live? Tiered State Allocation for Memory-Efficient Mixture-of-Experts Training},
   author={Nuemaan Malik},
   year={2026},
   eprint={2607.19058},
   archivePrefix={arXiv},
   primaryClass={cs.LG},
-  url={[https://arxiv.org/abs/2607.19058](https://arxiv.org/abs/2607.19058)}
+  url={https://arxiv.org/abs/2607.19058}
 }
 ```
+
 ## License
 
 [MIT](LICENSE)
