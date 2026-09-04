@@ -105,7 +105,7 @@ experiments/         Standalone studies: int32 boundary, tier ablation, LR sweep
 
 ## Notes and caveats
 
-- **Model:** decoder-only, 2 blocks (1 dense SwiGLU + 1 MoE of 128 experts, hidden 4096), d_model 4096, GQA 32/8, GPT-2 BPE. 6,784M parameters, ~440M active per token. Shallow by intent, since it concentrates 95% of parameters in the expert bank, the population whose optimizer state the study stresses.
+- **Model:** decoder-only, 2 blocks (1 dense SwiGLU + 1 MoE of 128 experts, hidden 4096), d_model 4096, GQA 32/8, GPT-2 BPE. 6,784M parameters, ~440M active per token. Shallow by intent, since it concentrates 95% of parameters in the expert bank, the population whose optimizer state the study stresses. How tiering composes across many MoE layers is untested.
 - **Main-table numbers are single runs** at standard learning rates (3e-4 AdamW/SkewAdam, 1e-4 Lion, 0.02 Muon). AdamW and Adafactor were later swept over bracketing LR grids with repeated seeds (see below). Lion and Muon remain at single untuned rates, and Lion in particular is learning-rate sensitive.
 - **Adafactor and GaLore** were run in a same-protocol follow-up on an NVIDIA H100 NVL (47 GB MIG slice) with the same code, data, seed, and shared initialization. SkewAdam, re-run in that batch as the anchor, landed at 109.0 against 108.4 on the H200, so the protocol transfers across hardware:
 
@@ -136,13 +136,14 @@ experiments/         Standalone studies: int32 boundary, tier ablation, LR sweep
   | Adafactor | 3e-5 … 3e-3 (5 points) | 1e-4 | 139.8 (2 seeds) |
   | **SkewAdam (untuned)** | — | 3e-4 | **108.4–109.0** (3 GPUs) |
 
-  Tuning helps the baselines (AdamW 126.8→118.5, Adafactor 149.5→139.8) without closing the gap. Untuned SkewAdam leads the best tuned AdamW by ~10 perplexity points (~20 seed-level standard deviations) and tuned Adafactor by ~31. Both minima are bracketed, Adafactor on both sides and AdamW from above, since 3e-5 undertrains at this budget. The separation between tuned AdamW and tuned Adafactor is the ablation's momentum story again, now between independent optimizers. All perplexities are final-step values, the same metric used throughout.
+  Tuning helps the baselines (AdamW 126.8→118.5, Adafactor 149.5→139.8) without closing the gap. Untuned SkewAdam leads the best tuned AdamW by ~10 perplexity points (~20 seed-level standard deviations) and tuned Adafactor by ~31. Both minima are bracketed, Adafactor on both sides and AdamW from above, since 3e-5 undertrains at this budget. The separation between tuned AdamW and tuned Adafactor is the ablation's momentum story again, now between independent optimizers. SkewAdam was left untuned throughout, so tuning it could only widen the gap. All perplexities are final-step values, the same metric used throughout.
+- **Adam-mini was not run**, and it is the closest precedent for structure-aware allocation. Guided by the block Hessian structure of Transformers, it averages Adam's second moment within parameter blocks, head-wise for queries and keys and row-wise elsewhere, while keeping momentum everywhere. Those tiers vary a different axis from these ones, which statistics each MoE population keeps at all, so the two look complementary. Keeping momentum on every parameter puts its state above 25 GB on this model, the same floor Lion and Muon sit at, so the memory comparison is settled and only the perplexity comparison is open. It is the natural next baseline.
 - Zero-shot scores after 82M tokens are near chance for all optimizers, as expected at that token budget. They are included for completeness.
 - **8-bit optimizer states hit a hard int32 wall** that factored state does not. The bitsandbytes `Adam8bit` kernel kills the process (C++ `exit(1)`, uncatchable) the moment a single parameter tensor reaches 2³¹ elements, while SkewAdam and fp32 Adam cross the boundary cleanly. Measured boundary, repro script, and raw logs in [experiments/int32-boundary](experiments/int32-boundary).
 
 ## Support this work
 
-This project was self-funded on rented GPU time, and the compute budget rather than the experimental design set the scale of the study. Planned next steps are deeper multi-layer MoE topologies, longer horizons with properly fused weight decay, and multi-seed replication. If you'd like to collaborate or can help with compute credits, reach out: **nuemaan.research@gmail.com**.
+This project was self-funded on rented GPU time, and the compute budget rather than the experimental design set the scale of the study. Planned next steps are an Adam-mini baseline, deeper multi-layer MoE topologies, longer horizons with properly fused weight decay, a sweep of SkewAdam's own learning rate, and multi-seed replication. If you'd like to collaborate or can help with compute credits, reach out: **nuemaan.research@gmail.com**.
 
 ## Citation
 
