@@ -149,7 +149,19 @@ This project was self-funded on rented GPU time, and the compute budget rather t
 
 Read the full paper on arXiv: [Where Should Optimizer State Live? Tiered State Allocation for Memory-Efficient Mixture-of-Experts Training](https://arxiv.org/abs/2607.19058)
 
-Citation metadata lives in [CITATION.cff](CITATION.cff). GitHub reads it directly, so the **Cite this repository** button in the sidebar will generate BibTeX or APA for you.
+If you use SkewAdam in your research, please cite it as follows:
+
+```bibtex
+@misc{malik2026skewadam,
+  title={Where Should Optimizer State Live? Tiered State Allocation for Memory-Efficient Mixture-of-Experts Training},
+  author={Nuemaan Malik},
+  year={2026},
+  eprint={2607.19058},
+  archivePrefix={arXiv},
+  primaryClass={cs.LG},
+  url={https://arxiv.org/abs/2607.19058}
+}
+```
 
 ## License
 
