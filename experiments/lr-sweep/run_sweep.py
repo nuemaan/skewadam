@@ -1,19 +1,6 @@
 """Learning-rate sweep for the baselines (AdamW, Adafactor) whose reported
 numbers rest on a single untuned learning rate.
 
-Wraps the released trainer without modifying it: builds the tokenizer, the
-batch cache, and a per-seed initialization once, then loops over a grid of
-(optimizer, lr, seed), calling train.train_one_optimizer for each and saving
-its summary to experiments/lr-sweep/results/<opt>_lr<lr>_seed<seed>.json.
-Sharing the data build across all runs is the whole point --- it is the
-expensive setup, and rebuilding it per run would multiply cost.
-
-Grid (edit GRID / SEEDS below): AdamW {1e-4, 3e-4, 1e-3}, Adafactor {1e-3,
-3e-3}, seeds {42, 43} -> 10 full 10k-step runs. SkewAdam keeps its reported
-3e-4 (its 108.4/108.9/108.9 across three platforms is the reference), so this
-is the conservative test: do LR-tuned baselines close the gap to an untuned
-SkewAdam?
-
 Usage (from the repository root, on a >=90 GB GPU so AdamW fits):
     python experiments/lr-sweep/run_sweep.py --dataset-name Skylion007/openwebtext
 """
@@ -55,7 +42,7 @@ def main():
     tokenizer = GPT2TokenizerFast.from_pretrained("gpt2", model_max_length=1000000)
     padded_vocab = math.ceil(tokenizer.vocab_size / 64) * 64
 
-    # data cache built ONCE, reused by every run
+   
     train_batches, val_batches = T.build_batch_caches(
         tokenizer=tokenizer, dataset_name=cfg.dataset_name, batch_size=cfg.batch_size,
         seq_len=cfg.seq_len, train_target_batches=cfg.train_batches,
@@ -78,9 +65,9 @@ def main():
     rows = []
     for seed in seeds:
         T.seed_everything(seed)
-        init_state = build_init()  # fresh init per seed (true seed variation)
+        init_state = build_init()  
         for opt, lr in GRID:
-            T.seed_everything(seed)  # matched stochasticity across opts within a seed
+            T.seed_everything(seed) 
             setattr(cfg, f"lr_{opt}", lr)
             cfg.seed = seed
             tag = f"{opt}_lr{lr:g}_seed{seed}"
