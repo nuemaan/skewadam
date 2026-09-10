@@ -1,4 +1,4 @@
-# environments and caches
+
 .venv/
 __pycache__/
 *.pyc
@@ -7,7 +7,7 @@ __pycache__/
 # checkpoints (large)
 *.pt
 
-# local drafts and paper build (not part of the code release)
+
 draft.docx
 skewadam paper*
 paper/
