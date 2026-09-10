@@ -3,11 +3,7 @@ import torch
 from torch.optim import Optimizer
 
 class SkewAdam(Optimizer):
-    """
-    SkewAdam: Memory-efficient optimizer with factored variance tracking.
-    Applies in-place momentum and variance updates to minimize memory footprint.
-    Incorporates stochastic rounding for low-precision (e.g., bfloat16) training stability.
-    """
+   
     def __init__(self, params, lr=1e-3, betas=(0.9, 0.999), eps=1e-8, weight_decay=0.0):
         defaults = dict(lr=lr, betas=betas, eps=eps, weight_decay=weight_decay, use_momentum=True, use_factored=True)
         super().__init__(params, defaults)
@@ -90,7 +86,7 @@ class SkewAdam(Optimizer):
                 update_rms = torch.linalg.vector_norm(update) / math.sqrt(update.numel())
                 update.mul_(1.0 / update_rms.clamp(min=1.0))
                 
-                # Stochastic rounding for low-precision master weights
+                # Stochastic rounding 
                 if p.dtype == torch.bfloat16:
                     p_fp32 = p.float()
                     p_fp32.add_(update, alpha=-lr)
