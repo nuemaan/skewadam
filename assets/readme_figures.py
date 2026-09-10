@@ -1,9 +1,5 @@
-"""Render the README figures as PNGs from the metrics in runs/.
+# Render the README figures as PNGs from the metrics in runs/
 
-Standalone: mirrors the styling of plot_metrics.py but writes PNG instead of
-PDF so the figures display inline on GitHub. Does not modify any training
-code or the paper figures.
-"""
 import glob
 import json
 import os
