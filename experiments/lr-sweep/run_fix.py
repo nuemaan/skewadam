@@ -1,12 +1,4 @@
-"""Corrected continuation of the LR sweep.
-
-The first pass swept Adafactor upward from 3e-4 (1e-3, 3e-3), where it diverges
-(496, 623) --- so its best remained 3e-4 = 149.5 and the lower direction was
-never tested. AdamW bottomed out at 117.9 (1e-4). This pass spends the
-remaining budget on what actually carries signal: Adafactor at lower LRs (does
-a smaller step rescue it, or is 3e-4 already its peak?) plus variance on the
-best configs. Configs are grouped by seed so only one initialization is held
-in memory at a time; seed-matched inits reproduce the first pass exactly.
+"""continuation of the LR sweep.
 
 Usage (from the repository root, on the same GPU):
     python experiments/lr-sweep/run_fix.py --dataset-name Skylion007/openwebtext
@@ -27,11 +19,11 @@ import train as T
 
 # (optimizer, lr, seed) --- grouped by seed, priority-ordered within reason
 CONFIGS = [
-    ("adafactor", 1e-4, 42),   # the key untested Adafactor direction
-    ("adafactor", 3e-5, 42),   # bracket lower still
-    ("adam", 1e-4, 43),        # AdamW best-config variance (re-includes the killed run)
-    ("adafactor", 1e-4, 43),   # Adafactor best-config variance
-    ("adam", 1e-4, 44),        # AdamW 3rd seed
+    ("adafactor", 1e-4, 42),   
+    ("adafactor", 3e-5, 42),   
+    ("adam", 1e-4, 43),        
+    ("adafactor", 1e-4, 43),   
+    ("adam", 1e-4, 44),       
 ]
 
 OUT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "results")
