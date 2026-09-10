@@ -6,7 +6,7 @@ import lm_eval
 from lm_eval.models.huggingface import HFLM
 from transformers import GPT2TokenizerFast
 
-# Updated import to reference the refactored training file
+
 from train import CausalMoETransformerLM, Config
 
 class MoEEvalWrapper(torch.nn.Module):
@@ -34,7 +34,7 @@ class MoEEvalWrapper(torch.nn.Module):
         logits, _ = self.base_model(input_ids)
         class DummyOutput:
             def __init__(self, logits):
-                # Upcast logits to FP32 for lm_eval numerical stability
+              
                 self.logits = logits.float()
         return DummyOutput(logits)
 
@@ -60,7 +60,7 @@ def run_evals(checkpoint_path: str):
     model.load_state_dict(checkpoint["model_state_dict"])
     model.eval()
     
-    # Cast to bfloat16 for evaluation to align with training precision
+    # Cast to bfloat16 
     model = model.to(device, dtype=torch.bfloat16)
 
     tokenizer = GPT2TokenizerFast.from_pretrained("gpt2", model_max_length=1000000)
@@ -100,6 +100,6 @@ def run_evals(checkpoint_path: str):
                 print(f"  {k}: {v}")
 
 if __name__ == "__main__":
-    # Support command-line arguments for dynamic evaluation scripting
+    
     target_ckpt = sys.argv[1] if len(sys.argv) > 1 else "runs/best_skewadam.pt"
     run_evals(target_ckpt)
