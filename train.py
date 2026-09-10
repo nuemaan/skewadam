@@ -1,9 +1,3 @@
-#!/usr/bin/env python3
-"""
-Mixture-of-Experts (MoE) Training and Optimizer Ablation Framework.
-Evaluates memory-efficient optimizers (SkewAdam, Adam, Lion, Muon, GaLore)
-on a 6.7B sparse SwiGLU topology.
-"""
 from __future__ import annotations
 
 import argparse
@@ -43,9 +37,8 @@ def clear_vram() -> None:
         torch.cuda.reset_peak_memory_stats()
     gc.collect()
 
-# -------------------------------------------------------------------------
 # Baseline Optimizers
-# -------------------------------------------------------------------------
+# ---------------------------------
 
 class StochasticAdamW(torch.optim.Optimizer):
     def __init__(self, params, lr=1e-3, betas=(0.9, 0.999), eps=1e-8, weight_decay=0.01):
@@ -275,9 +268,8 @@ class GaLoreAdamW(torch.optim.Optimizer):
                 else:
                     p.add_(update, alpha=-group['lr'])
 
-# -------------------------------------------------------------------------
 # Configuration and Data Loaders
-# -------------------------------------------------------------------------
+
 
 @dataclass
 class Config:
@@ -360,9 +352,9 @@ def build_batch_caches(
             break
     return train_batches, val_batches
 
-# -------------------------------------------------------------------------
+
 # Model Architecture
-# -------------------------------------------------------------------------
+
 
 class GroupedQueryAttention(nn.Module):
     def __init__(self, d_model: int, n_heads: int, n_kv_heads: int, dropout: float):
@@ -507,7 +499,7 @@ class CausalMoETransformerLM(nn.Module):
         total_aux_loss = 0.0
         for layer in self.layers:
             if self.training:
-                # Apply activation checkpointing to bound memory usage
+                # activation checkpointing to bound memory usage
                 h, aux_loss = checkpoint(layer, h, use_reentrant=False)
                 total_aux_loss = total_aux_loss + aux_loss
             else:
@@ -515,9 +507,9 @@ class CausalMoETransformerLM(nn.Module):
                 total_aux_loss = total_aux_loss + aux_loss
         return self.lm_head(self.norm_f(h)), total_aux_loss
 
-# -------------------------------------------------------------------------
+
 # Training Utilities
-# -------------------------------------------------------------------------
+
 
 def build_optimizer(name: str, model: nn.Module, lr: float, wd: float):
     name = name.lower()
